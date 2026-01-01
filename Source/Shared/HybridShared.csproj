@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFrameworks>net472;net8.0</TargetFrameworks>
+		<RootNamespace>HybridShared</RootNamespace>
+		<AssemblyName>HybridShared</AssemblyName>
+		<Nullable>disable</Nullable>
+		<LangVersion>latest</LangVersion>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)'=='Release'">
+		<Optimize>true</Optimize>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- UDP Networking -->
+		<PackageReference Include="LiteNetLib" Version="0.9.5.2" />
+		<!-- Serialization -->
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+	</ItemGroup>
+</Project>

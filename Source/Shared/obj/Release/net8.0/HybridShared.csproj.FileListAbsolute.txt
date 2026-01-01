@@ -1,0 +1,12 @@
+C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Shared\bin\Release\net8.0\HybridShared.deps.json
+C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Shared\bin\Release\net8.0\HybridShared.dll
+C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Shared\bin\Release\net8.0\HybridShared.pdb
+C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Shared\obj\Release\net8.0\HybridShared.csproj.AssemblyReference.cache
+C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Shared\obj\Release\net8.0\HybridShared.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Shared\obj\Release\net8.0\HybridShared.AssemblyInfoInputs.cache
+C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Shared\obj\Release\net8.0\HybridShared.AssemblyInfo.cs
+C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Shared\obj\Release\net8.0\HybridShared.csproj.CoreCompileInputs.cache
+C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Shared\obj\Release\net8.0\HybridShared.dll
+C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Shared\obj\Release\net8.0\refint\HybridShared.dll
+C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Shared\obj\Release\net8.0\HybridShared.pdb
+C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Shared\obj\Release\net8.0\ref\HybridShared.dll

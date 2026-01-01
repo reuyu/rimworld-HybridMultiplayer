@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "dgSpecHash": "ETYmNXUo9fI=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\chanc\\OneDrive\\Documents\\rimmulti\\HybridMultiplayer\\Source\\Client\\HybridClient.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\chanc\\.nuget\\packages\\krafs.rimworld.ref\\1.6.4633\\krafs.rimworld.ref.1.6.4633.nupkg.sha512",
+    "C:\\Users\\chanc\\.nuget\\packages\\lib.harmony\\2.4.2\\lib.harmony.2.4.2.nupkg.sha512",
+    "C:\\Users\\chanc\\.nuget\\packages\\litenetlib\\0.9.5.2\\litenetlib.0.9.5.2.nupkg.sha512",
+    "C:\\Users\\chanc\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}

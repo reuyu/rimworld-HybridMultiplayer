@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net472</TargetFramework>
+		<RootNamespace>HybridClient</RootNamespace>
+		<AssemblyName>HybridClient</AssemblyName>
+		<Nullable>disable</Nullable>
+		<LangVersion>latest</LangVersion>
+		<OutputPath>..\..\Assemblies</OutputPath>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+		<AppendConfigurationToOutputPath>false</AppendConfigurationToOutputPath>
+		<DebugType>embedded</DebugType>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)'=='Release'">
+		<Optimize>true</Optimize>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- RimWorld Reference -->
+		<PackageReference Include="Krafs.Rimworld.Ref" Version="1.6.4633" />
+		<!-- Harmony for patching -->
+		<PackageReference Include="Lib.Harmony" Version="2.4.2">
+			<ExcludeAssets>runtime</ExcludeAssets>
+		</PackageReference>
+		<!-- UDP Networking -->
+		<PackageReference Include="LiteNetLib" Version="0.9.5.2" />
+		<!-- Serialization -->
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Shared\HybridShared.csproj" />
+	</ItemGroup>
+</Project>
