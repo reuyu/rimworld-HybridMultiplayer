@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HybridServer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2084db0441a4a9095303c80959f5a9cb83cb3dcd")]
 [assembly: System.Reflection.AssemblyProductAttribute("HybridServer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HybridServer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -10,3 +10,4 @@ C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Shared\obj\R
 C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Shared\obj\Release\net472\HybridSh.F9563F21.Up2Date
 C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Shared\obj\Release\net472\HybridShared.dll
 C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Shared\obj\Release\net472\HybridShared.pdb
+C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Shared\obj\Release\net472\HybridShared.sourcelink.json

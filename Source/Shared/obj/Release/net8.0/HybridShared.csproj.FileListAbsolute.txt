@@ -10,3 +10,4 @@ C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Shared\obj\R
 C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Shared\obj\Release\net8.0\refint\HybridShared.dll
 C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Shared\obj\Release\net8.0\HybridShared.pdb
 C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Shared\obj\Release\net8.0\ref\HybridShared.dll
+C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Shared\obj\Release\net8.0\HybridShared.sourcelink.json

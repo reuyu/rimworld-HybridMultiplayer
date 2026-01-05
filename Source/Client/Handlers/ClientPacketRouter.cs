@@ -30,7 +30,9 @@ namespace HybridClient.Handlers
             
             if (packet == null)
             {
-                Log("[!] Failed to deserialize packet");
+                // 디버그: 어떤 패킷이 실패했는지 확인
+                int packetType = data.Length > 0 ? data[0] : -1;
+                Log($"[!] Failed to deserialize packet (Type byte: {packetType}, Length: {data.Length})");
                 return;
             }
             

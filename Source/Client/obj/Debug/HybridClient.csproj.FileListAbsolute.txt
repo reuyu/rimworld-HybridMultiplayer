@@ -1,0 +1,9 @@
+C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Assemblies\HybridClient.dll
+C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Client\obj\Debug\HybridClient.csproj.AssemblyReference.cache
+C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Client\obj\Debug\HybridClient.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Client\obj\Debug\HybridClient.AssemblyInfoInputs.cache
+C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Client\obj\Debug\HybridClient.AssemblyInfo.cs
+C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Client\obj\Debug\HybridClient.csproj.CoreCompileInputs.cache
+C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Client\obj\Debug\HybridClient.sourcelink.json
+C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Client\obj\Debug\HybridCl.A8609B5E.Up2Date
+C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Client\obj\Debug\HybridClient.dll

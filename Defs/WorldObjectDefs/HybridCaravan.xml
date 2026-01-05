@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+    <WorldObjectDef>
+        <defName>HybridCaravan</defName>
+        <label>Online Caravan</label>
+        <description>A caravan from another player</description>
+        <worldObjectClass>HybridClient.WorldObjects.HybridCaravan</worldObjectClass>
+        <texture>World/WorldObjects/Caravan</texture>
+        <expandingIconTexture>World/WorldObjects/Caravan</expandingIconTexture>
+        <expandingIcon>true</expandingIcon>
+        <expandingIconPriority>95</expandingIconPriority>
+        <saved>false</saved>
+    </WorldObjectDef>
+</Defs>

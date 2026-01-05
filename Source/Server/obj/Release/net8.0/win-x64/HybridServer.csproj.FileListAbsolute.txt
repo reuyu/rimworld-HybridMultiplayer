@@ -200,3 +200,4 @@ C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Server\obj\R
 C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Server\obj\Release\net8.0\win-x64\HybridServer.pdb
 C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Server\obj\Release\net8.0\win-x64\HybridServer.genruntimeconfig.cache
 C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Server\obj\Release\net8.0\win-x64\ref\HybridServer.dll
+C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Server\obj\Release\net8.0\win-x64\HybridServer.sourcelink.json

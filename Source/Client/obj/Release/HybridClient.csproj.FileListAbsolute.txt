@@ -6,3 +6,4 @@ C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Client\obj\R
 C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Assemblies\HybridClient.dll
 C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Client\obj\Release\HybridCl.A8609B5E.Up2Date
 C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Client\obj\Release\HybridClient.dll
+C:\Users\chanc\OneDrive\Documents\rimmulti\HybridMultiplayer\Source\Client\obj\Release\HybridClient.sourcelink.json
