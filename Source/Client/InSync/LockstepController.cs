@@ -37,6 +37,9 @@ namespace HybridClient.InSync
         private static LockstepController _instance;
         public static LockstepController Instance => _instance ??= new LockstepController();
         
+        /// <summary>명령 지연 틱 수</summary>
+        public const int COMMAND_DELAY = 2;
+        
         // ========== 상태 ==========
         
         /// <summary>현재 InSync 상태</summary>
@@ -44,6 +47,9 @@ namespace HybridClient.InSync
         
         /// <summary>역할 (권위자/침입자)</summary>
         public InSyncRole Role { get; private set; } = InSyncRole.None;
+        
+        /// <summary>InSync 모드 (전투/협동)</summary>
+        public InSyncMode Mode { get; private set; } = InSyncMode.Battle;
         
         /// <summary>세션 ID</summary>
         public int SessionId { get; private set; } = -1;
@@ -57,6 +63,9 @@ namespace HybridClient.InSync
         /// <summary>현재 틱 (MP mapTicks 참조)</summary>
         public int MapTicks { get; private set; }
         
+        /// <summary>현재 틱 (별칭)</summary>
+        public int CurrentTick => MapTicks;
+        
         /// <summary>난수 상태 (MP randState 참조)</summary>
         public ulong RandState { get; private set; } = 1;
         
@@ -65,6 +74,9 @@ namespace HybridClient.InSync
         
         /// <summary>명령 큐 (MP cmds 참조)</summary>
         public Queue<LockstepCommandPacket> Cmds { get; private set; } = new();
+        
+        /// <summary>InSync 활성화 여부</summary>
+        public bool IsActive => State == InSyncState.Active;
         
         // ========== 컨텍스트 저장용 ==========
         
@@ -135,6 +147,13 @@ namespace HybridClient.InSync
             if (State != InSyncState.Active || SyncMap == null)
                 return;
             
+            // 맵 컴포넌트가 초기화되었는지 확인
+            if (SyncMap.listerThings == null || SyncMap.mapPawns == null)
+            {
+                Log.Warning("[HybridMP][LOCKSTEP] Map components not initialized yet, skipping tick");
+                return;
+            }
+            
             // 상대방 틱 확인 (Lockstep 동기화)
             // 상대방이 현재 틱까지 진행하지 않았으면 대기
             // TODO: 실제 구현에서는 서버를 통해 틱 확인 필요
@@ -143,16 +162,21 @@ namespace HybridClient.InSync
             
             try
             {
-                // 현재 틱의 명령 실행
-                ExecuteCommands();
+                // 현재 틱의 명령 실행 (CommandQueue.Instance 사용)
+                CommandQueue.Instance.ExecuteForTick(MapTicks);
                 
-                // 맵 틱 진행
-                SyncMap.MapPreTick();
-                MapTicks++;
+                // 맵 틱 진행 (null check 강화)
+                if (SyncMap?.info != null)
+                {
+                    SyncMap.MapPreTick();
+                    MapTicks++;
+                    
+                    // 맵 틱 진행 완료
+                    SyncMap.MapPostTick();
+                }
                 
-                // 맵 틱 진행 완료
-                
-                SyncMap.MapPostTick();
+                // RimWorld 내부 틱과 동기화
+                // TODO: Harmony Transpiler로 ticksGameInt/ticksThisFrame 접근 필요
                 
                 // 틱 동기화 패킷 전송
                 SendTickConfirmation();

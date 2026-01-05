@@ -257,6 +257,7 @@ namespace HybridServer
             router.Register<InSyncRequestPacket>(HandleInSyncRequest);
             router.Register<MapSnapshotPacket>(HandleMapSnapshot);
             router.Register<LockstepCommandPacket>(HandleLockstepCommand);
+            router.Register<LockstepTickPacket>(HandleLockstepTick);
             router.Register<InSyncEndPacket>(HandleInSyncEnd);
         }
         
@@ -923,6 +924,19 @@ namespace HybridServer
                 return;
             
             // 상대방에게 명령 전달
+            var targetPeer = (peer == session.AuthorityPeer) ? session.InvaderPeer : session.AuthorityPeer;
+            if (targetPeer != null)
+            {
+                Send(targetPeer, packet);
+            }
+        }
+        
+        private void HandleLockstepTick(NetPeer peer, LockstepTickPacket packet)
+        {
+            if (!inSyncSessions.TryGetValue(packet.SessionId, out var session))
+                return;
+            
+            // 상대방에게 틱 확인 전달
             var targetPeer = (peer == session.AuthorityPeer) ? session.InvaderPeer : session.AuthorityPeer;
             if (targetPeer != null)
             {

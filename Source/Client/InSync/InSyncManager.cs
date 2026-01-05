@@ -97,8 +97,14 @@ namespace HybridClient.InSync
                 return;
             }
             
+            // ===== 권위자 세력 초기화 =====
+            InSyncFactionManager.InitializeForInSync(true, packet.RequesterUsername);
+            
             // 맵 스냅샷 생성 및 전송
             SendMapSnapshot();
+            
+            // ===== 명령 동기화 시작 =====
+            SyncHandler.Instance.StartCapturing();
             
             // Lockstep 진입
             LockstepController.Instance.EnterAsAuthority(
@@ -173,8 +179,14 @@ namespace HybridClient.InSync
                     {
                         Current.Game.CurrentMap = SyncMap;
                         
-                        // ===== 침입자 폰 스폰 =====
+                        // ===== 세력 분리 설정 =====
+                        InSyncFactionManager.SetupInvaderFactionAfterLoad(NetworkManager.Instance?.Username ?? "Invader");
+                        
+                        // ===== 침입자 폰 스폰 (별도 세력으로) =====
                         SpawnInvaderPawns(SyncMap, invaderPawnInfos);
+                        
+                        // ===== 명령 동기화 시작 =====
+                        SyncHandler.Instance.StartCapturing();
                         
                         // Lockstep 진입
                         LockstepController.Instance.EnterAsInvader(
@@ -231,31 +243,44 @@ namespace HybridClient.InSync
             
             Log.Message($"[HybridMP][INSYNC] Attempting to spawn {pawnInfos.Count} invader pawns");
             
-            // 침입자 Faction 생성 또는 가져오기
-            Faction invaderFaction = Find.FactionManager?.AllFactions?.FirstOrDefault(f => f.IsPlayer);
+            // 침입자 Faction 가져오기 (InSyncFactionManager에서 생성한 세력 사용)
+            Faction invaderFaction = InSyncFactionManager.InvaderFaction ?? InSyncFactionManager.MyFaction;
             if (invaderFaction == null)
             {
-                Log.Error("[HybridMP][INSYNC] No player faction found");
+                // 폴백: 기존 플레이어 세력 사용
+                invaderFaction = Find.FactionManager?.AllFactions?.FirstOrDefault(f => f.IsPlayer);
+            }
+            if (invaderFaction == null)
+            {
+                Log.Error("[HybridMP][INSYNC] No faction found for invader pawns");
                 return;
             }
+            Log.Message($"[HybridMP][INSYNC] Using faction for invader pawns: {invaderFaction.Name}");
             
-            // 맵 가장자리에서 안전한 스폰 위치 찾기
-            IntVec3 spawnCenter = IntVec3.Invalid;
-            try
+            // 맵 가장자리에서 스폰 위치 계산 (PathGrid 미초기화 상태에서도 동작)
+            // 맵 크기 기반으로 가장자리 위치 계산
+            IntVec3 spawnCenter;
+            int mapWidth = map.Size.x;
+            int mapHeight = map.Size.z;
+            int edge = Rand.Range(0, 4); // 0=북, 1=남, 2=동, 3=서
+            
+            switch (edge)
             {
-                // 먼저 RandomEdgeCell 시도
-                if (!CellFinder.TryFindRandomEdgeCellWith(c => c.Standable(map) && !c.Fogged(map), map, CellFinder.EdgeRoadChance_Neutral, out spawnCenter))
-                {
-                    // 실패하면 맵 중앙 근처에서 스폰
-                    spawnCenter = map.Center;
-                    Log.Warning("[HybridMP][INSYNC] Could not find edge cell, using map center");
-                }
+                case 0: // 북쪽 가장자리
+                    spawnCenter = new IntVec3(Rand.Range(10, mapWidth - 10), 0, mapHeight - 5);
+                    break;
+                case 1: // 남쪽 가장자리
+                    spawnCenter = new IntVec3(Rand.Range(10, mapWidth - 10), 0, 5);
+                    break;
+                case 2: // 동쪽 가장자리
+                    spawnCenter = new IntVec3(mapWidth - 5, 0, Rand.Range(10, mapHeight - 10));
+                    break;
+                default: // 서쪽 가장자리
+                    spawnCenter = new IntVec3(5, 0, Rand.Range(10, mapHeight - 10));
+                    break;
             }
-            catch (Exception e)
-            {
-                Log.Warning($"[HybridMP][INSYNC] Error finding spawn location: {e.Message}. Using map center.");
-                spawnCenter = map.Center;
-            }
+            
+            Log.Message($"[HybridMP][INSYNC] Spawn center: {spawnCenter}");
             
             int spawned = 0;
             foreach (var info in pawnInfos)
@@ -280,8 +305,7 @@ namespace HybridClient.InSync
                     var pawn = PawnGenerator.GeneratePawn(new PawnGenerationRequest(
                         kindDef,
                         invaderFaction,
-                        PawnGenerationContext.NonPlayer,
-                        forceGenerateNewPawn: true
+                        PawnGenerationContext.NonPlayer
                     ));
                     
                     if (pawn == null)
@@ -296,15 +320,30 @@ namespace HybridClient.InSync
                         pawn.Name = new NameSingle(info.Name);
                     }
                     
-                    // 안전한 스폰 위치 찾기
-                    IntVec3 spawnPos = spawnCenter;
-                    if (!CellFinder.TryFindRandomCellNear(spawnCenter, map, 10, c => c.Standable(map), out spawnPos))
-                    {
-                        spawnPos = spawnCenter;
-                    }
+                    // 스폰 위치 (중앙에서 약간 떨어진 위치)
+                    IntVec3 spawnPos = new IntVec3(
+                        spawnCenter.x + Rand.Range(-3, 4),
+                        0,
+                        spawnCenter.z + Rand.Range(-3, 4)
+                    );
+                    
+                    // 맵 범위 내로 클램핑
+                    if (spawnPos.x < 1) spawnPos.x = 1;
+                    if (spawnPos.x > mapWidth - 2) spawnPos.x = mapWidth - 2;
+                    if (spawnPos.z < 1) spawnPos.z = 1;
+                    if (spawnPos.z > mapHeight - 2) spawnPos.z = mapHeight - 2;
                     
                     // 스폰
                     GenSpawn.Spawn(pawn, spawnPos, map, WipeMode.Vanish);
+                    
+                    // 첫 번째 폰으로 카메라 점프 및 선택
+                    if (spawned == 0)
+                    {
+                        CameraJumper.TryJump(pawn);
+                        Find.Selector.ClearSelection();
+                        Find.Selector.Select(pawn);
+                        Log.Message($"[HybridMP][INSYNC] Camera jumped to first pawn: {pawn.Name}");
+                    }
                     
                     spawned++;
                     Log.Message($"[HybridMP][INSYNC] Spawned invader pawn: {pawn.Name?.ToStringFull} at {spawnPos}");
@@ -316,21 +355,6 @@ namespace HybridClient.InSync
             }
             
             Log.Message($"[HybridMP][INSYNC] Spawned {spawned}/{pawnInfos.Count} invader pawns");
-        }
-        
-        
-        /// <summary>
-        /// Lockstep 명령 패킷 처리
-        /// </summary>
-        public void HandleLockstepCommand(LockstepCommandPacket packet)
-        {
-            if (packet.SessionId != CurrentSessionId)
-                return;
-            
-            Log.Message($"[HybridMP][INSYNC] Received command: Type {packet.CommandType}, Tick {packet.ExecuteTick}");
-            
-            // 명령 큐에 추가
-            CommandQueue.Instance.Enqueue(packet);
         }
         
         /// <summary>
@@ -347,6 +371,20 @@ namespace HybridClient.InSync
             Reset();
             
             Messages.Message($"InSync ended: {packet.Reason}", MessageTypeDefOf.NeutralEvent, false);
+        }
+        
+        /// <summary>
+        /// Lockstep 명령 패킷 처리 (상대방의 명령 수신)
+        /// </summary>
+        public void HandleLockstepCommand(LockstepCommandPacket packet)
+        {
+            if (packet.SessionId != CurrentSessionId)
+                return;
+            
+            Log.Message($"[HybridMP][INSYNC] Received command from partner for tick {packet.ExecuteTick}");
+            
+            // 명령을 CommandQueue에 추가
+            CommandQueue.Instance.Enqueue(packet);
         }
         
         // ========== InSync 시작 ==========

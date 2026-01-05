@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HybridShared")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2084db0441a4a9095303c80959f5a9cb83cb3dcd")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+94f15e9c0a4ba483fc1b121c468b417a2b7135b7")]
 [assembly: System.Reflection.AssemblyProductAttribute("HybridShared")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HybridShared")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
