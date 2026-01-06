@@ -430,6 +430,13 @@ namespace HybridClient.InSync
             
             Log.Message($"[HybridMP][INSYNC] Session ended: {packet.Reason}");
             
+            // 🔧 권위자인 경우 상태 복원 (InSync 전 상태로)
+            if (Role == InSyncRole.Authority && SyncMap != null)
+            {
+                InSyncStatePreserver.RestoreState(SyncMap);
+                Log.Message("[HybridMP][INSYNC] Authority state restored");
+            }
+            
             LockstepController.Instance.ExitLockstep(packet.Reason);
             Reset();
             
@@ -448,6 +455,36 @@ namespace HybridClient.InSync
             
             // 명령을 CommandQueue에 추가
             CommandQueue.Instance.Enqueue(packet);
+        }
+        
+        /// <summary>
+        /// Lockstep 틱 패킷 처리 (상대방의 틱 진행 확인)
+        /// 🔴 이전에 누락되어 틱 동기화가 안 됨
+        /// </summary>
+        public void HandleLockstepTick(LockstepTickPacket packet)
+        {
+            if (packet.SessionId != CurrentSessionId)
+                return;
+            
+            // 상대방의 틱 진행 상태 업데이트
+            LockstepController.Instance.UpdatePartnerTick(packet.Tick);
+            
+            Log.Message($"[HybridMP][INSYNC] Partner tick: {packet.Tick}");
+        }
+        
+        /// <summary>
+        /// SyncOpinion 패킷 처리 (Desync 감지용)
+        /// 🔴 이전에 누락되어 Desync 감지가 안 됨
+        /// </summary>
+        public void HandleSyncOpinion(SyncOpinionPacket packet)
+        {
+            if (packet.SessionId != CurrentSessionId)
+                return;
+            
+            // Desync 감지기에 상대방 Opinion 전달
+            InSyncDesyncDetector.Instance.ReceivePartnerOpinion(packet);
+            
+            Log.Message($"[HybridMP][INSYNC] Received sync opinion for tick {packet.StartTick}");
         }
         
         // ========== InSync 시작 ==========

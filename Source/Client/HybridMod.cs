@@ -293,6 +293,9 @@ namespace HybridClient
     {
         static HybridStartup()
         {
+            // SyncRegistry 초기화 (MP 스타일 동기화 시스템)
+            InSync.SyncRegistry.Initialize();
+            
             Log.Message("[HybridMP] StaticConstructorOnStartup completed");
         }
     }

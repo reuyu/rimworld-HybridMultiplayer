@@ -121,6 +121,8 @@ namespace HybridClient
             router.Register<MapSnapshotPacket>(HandleMapSnapshot);
             router.Register<LockstepCommandPacket>(HandleLockstepCommand);
             router.Register<InSyncEndPacket>(HandleInSyncEnd);
+            router.Register<LockstepTickPacket>(HandleLockstepTick);  // 🔴 이전에 누락됨
+            router.Register<SyncOpinionPacket>(HandleSyncOpinion);    // 🔴 이전에 누락됨
             
             // 세력 관계 패킷 핸들러
             router.Register<FactionRelationsResponsePacket>(HandleFactionRelationsResponse);
@@ -236,6 +238,16 @@ namespace HybridClient
                 Log.Message($"[HybridMP] Battle result: {packet.BattleResult.Value}");
                 // TODO: 전투 결과 UI 표시
             }
+        }
+        
+        private void HandleLockstepTick(LockstepTickPacket packet)
+        {
+            InSync.InSyncManager.Instance.HandleLockstepTick(packet);
+        }
+        
+        private void HandleSyncOpinion(SyncOpinionPacket packet)
+        {
+            InSync.InSyncManager.Instance.HandleSyncOpinion(packet);
         }
         
         #endregion

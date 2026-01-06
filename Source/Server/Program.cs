@@ -259,6 +259,7 @@ namespace HybridServer
             router.Register<LockstepCommandPacket>(HandleLockstepCommand);
             router.Register<LockstepTickPacket>(HandleLockstepTick);
             router.Register<InSyncEndPacket>(HandleInSyncEnd);
+            router.Register<SyncOpinionPacket>(HandleSyncOpinion);
             
             // 세력 관계 패킷 핸들러
             router.Register<FactionRelationsRequestPacket>(HandleFactionRelationsRequest);
@@ -963,6 +964,19 @@ namespace HybridServer
                 Send(session.InvaderPeer, packet);
             
             inSyncSessions.Remove(packet.SessionId);
+        }
+        
+        private void HandleSyncOpinion(NetPeer peer, SyncOpinionPacket packet)
+        {
+            if (!inSyncSessions.TryGetValue(packet.SessionId, out var session))
+                return;
+            
+            // 상대방에게 SyncOpinion 전달 (Desync 감지용)
+            var targetPeer = (peer == session.AuthorityPeer) ? session.InvaderPeer : session.AuthorityPeer;
+            if (targetPeer != null)
+            {
+                Send(targetPeer, packet);
+            }
         }
         
         // ========== 세력 관계 핸들러 ==========

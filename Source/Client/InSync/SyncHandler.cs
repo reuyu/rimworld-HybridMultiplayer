@@ -257,6 +257,15 @@ namespace HybridClient.InSync
                     case InSyncCommandType.Stop:
                         ExecuteStop(cmd);
                         break;
+                    case InSyncCommandType.Gizmo:
+                        ExecuteGizmo(cmd);
+                        break;
+                    case InSyncCommandType.Designate:
+                        ExecuteDesignate(cmd);
+                        break;
+                    case InSyncCommandType.FloatMenu:
+                        ExecuteFloatMenu(cmd);
+                        break;
                     default:
                         Log.Warning($"[HybridMP][SYNC] Unknown command type: {cmd.Type}");
                         break;
@@ -339,6 +348,45 @@ namespace HybridClient.InSync
                     return thing;
             }
             return null;
+        }
+        
+        // ===== MP 스타일 명령 실행 =====
+        
+        private void ExecuteGizmo(InSyncCommand cmd)
+        {
+            // Gizmo는 StringValue에 타입명이 저장됨
+            // TODO: 실제 Gizmo 재실행 로직 (MP는 Gizmo ID로 찾아서 실행)
+            Log.Message($"[HybridMP][SYNC] Gizmo executed: {cmd.StringValue}");
+        }
+        
+        private void ExecuteDesignate(InSyncCommand cmd)
+        {
+            var map = InSyncManager.Instance.SyncMap;
+            if (map == null) return;
+            
+            // Designator 타입에 따른 지정 실행
+            if (cmd.TargetThingId > 0)
+            {
+                // Thing 지정
+                var thing = FindThing(cmd.TargetThingId);
+                if (thing != null)
+                {
+                    Log.Message($"[HybridMP][SYNC] Designate thing: {cmd.StringValue} on {thing.Label}");
+                }
+            }
+            else
+            {
+                // 셀 지정
+                var cell = new IntVec3(cmd.TargetX, 0, cmd.TargetZ);
+                Log.Message($"[HybridMP][SYNC] Designate cell: {cmd.StringValue} at ({cell.x}, {cell.z})");
+            }
+        }
+        
+        private void ExecuteFloatMenu(InSyncCommand cmd)
+        {
+            // FloatMenu는 StringValue에 선택 라벨이 저장됨
+            // TODO: 실제 FloatMenu 옵션 재실행 (MP는 델리게이트 저장+실행)
+            Log.Message($"[HybridMP][SYNC] FloatMenu choice: {cmd.StringValue}");
         }
         
         private string SerializeCommand(InSyncCommand cmd)

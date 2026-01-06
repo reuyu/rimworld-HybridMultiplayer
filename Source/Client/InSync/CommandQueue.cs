@@ -65,35 +65,14 @@ namespace HybridClient.InSync
         /// <summary>
         /// 명령 실행
         /// MP AsyncTimeComp.ExecuteCmd() 참조
+        /// 🔧 SyncHandler와 통합: 모든 명령은 SyncHandler.ExecuteCommand로 위임
         /// </summary>
         private void ExecuteCommand(LockstepCommandPacket cmd)
         {
-            Log.Message($"[HybridMP][CMDQUEUE] Executing command type {cmd.CommandType} from {cmd.SenderUsername}");
+            Log.Message($"[HybridMP][CMDQUEUE] Executing command from {cmd.SenderUsername} for tick {cmd.ExecuteTick}");
             
-            byte[] data = cmd.GetCommandData();
-            
-            switch (cmd.CommandType)
-            {
-                case 0: // Sync (일반 동기화)
-                    // TODO: SyncHandler 구현
-                    break;
-                    
-                case 1: // Draft 명령
-                    ExecuteDraftCommand(data);
-                    break;
-                    
-                case 2: // Move 명령
-                    ExecuteMoveCommand(data);
-                    break;
-                    
-                case 3: // TimeSpeed
-                    ExecuteTimeSpeedCommand(data);
-                    break;
-                    
-                default:
-                    Log.Warning($"[HybridMP][CMDQUEUE] Unknown command type: {cmd.CommandType}");
-                    break;
-            }
+            // SyncHandler로 위임하여 통합 처리
+            SyncHandler.Instance.ExecuteCommand(cmd);
         }
         
         /// <summary>
