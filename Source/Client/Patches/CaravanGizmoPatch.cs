@@ -122,11 +122,24 @@ namespace HybridClient.Patches
             // 캐러밴 및 타일 정보 저장
             InSync.InSyncManager.Instance.SetPendingRequest(caravan, settlement.Tile);
             
+            // 캐러밴 멤버의 PawnInfo 수집
+            var pawns = new System.Collections.Generic.List<PawnInfo>();
+            foreach (var pawn in caravan.PawnsListForReading)
+            {
+                pawns.Add(new PawnInfo
+                {
+                    Name = pawn.Name?.ToStringFull ?? "Unknown",
+                    KindDef = pawn.kindDef?.defName ?? "Colonist",
+                    FactionDef = pawn.Faction?.def?.defName ?? "PlayerColony"
+                });
+            }
+            
             var packet = new InSyncRequestPacket
             {
                 TargetTileId = settlement.Tile,
                 TargetUsername = targetUsername,
-                Mode = mode
+                Mode = mode,
+                Pawns = pawns
             };
             
             NetworkManager.Instance.Send(packet);

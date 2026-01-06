@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
 using Verse;
+using HarmonyLib;
 
 namespace HybridClient.InSync
 {
@@ -23,6 +24,31 @@ namespace HybridClient.InSync
         
         /// <summary>권위자 세력 (InSync 중에만 유효)</summary>
         public static Faction AuthorityFaction { get; private set; }
+        
+        /// <summary>
+        /// 침입자 클라이언트에서 세력 컨텍스트 스왑
+        /// 로드된 권위자 세력을 AuthorityFaction으로,
+        /// 침입자 세력을 Faction.OfPlayer로 설정
+        /// MP FactionContext.Set 방식 적용
+        /// </summary>
+        public static void SwapFactionContext(string invaderUsername)
+        {
+            Log.Message("[HybridMP][FACTION] Swapping faction context for invader...");
+            
+            // 1. 현재 로드된 세력 (권위자의 세력, 현재 Faction.OfPlayer)
+            var authorityFaction = Faction.OfPlayer;
+            AuthorityFaction = authorityFaction;
+            
+            // 2. 침입자 세력 생성 또는 찾기
+            var invaderFaction = CreateInvaderFaction(invaderUsername);
+            InvaderFaction = invaderFaction;
+            MyFaction = InvaderFaction;
+            
+            // 3. FactionManager의 ofPlayer 교체 (Reflection - RimWorld에서 internal)
+            SetOfPlayer(invaderFaction);
+            
+            Log.Message($"[HybridMP][FACTION] Context swapped. Authority: {AuthorityFaction.Name}, Invader (Player): {Faction.OfPlayer.Name}");
+        }
         
         /// <summary>
         /// 세력 컨텍스트 Push - 현재 세력 저장 후 새 세력으로 전환
@@ -61,12 +87,30 @@ namespace HybridClient.InSync
         }
         
         /// <summary>
-        /// 현재 플레이어 세력 설정
+        /// 현재 플레이어 세력 설정 (Reflection - RimWorld에서 internal)
         /// </summary>
         public static void Set(Faction newFaction)
         {
-            // RimWorld에서 직접 ofPlayer 설정 불가 - 내부 상태로만 관리
-            // Find.FactionManager.ofPlayer = newFaction;
+            SetOfPlayer(newFaction);
+        }
+        
+        /// <summary>
+        /// ofPlayer 필드 설정 (Reflection)
+        /// </summary>
+        private static void SetOfPlayer(Faction faction)
+        {
+            try
+            {
+                var field = AccessTools.Field(typeof(FactionManager), "ofPlayer");
+                if (field != null)
+                {
+                    field.SetValue(Find.FactionManager, faction);
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Error($"[HybridMP][FACTION] Failed to set ofPlayer: {e}");
+            }
         }
         
         /// <summary>
@@ -85,28 +129,63 @@ namespace HybridClient.InSync
         {
             try
             {
-                // 이미 존재하면 반환
-                if (playerFactions.TryGetValue(username, out var existingFaction))
+                // 이미 캐시되어 있으면 반환
+                if (playerFactions.TryGetValue(username, out var existingFaction) && existingFaction != null)
                 {
-                    Log.Message($"[HybridMP][FACTION] Reusing existing faction for {username}");
+                    Log.Message($"[HybridMP][FACTION] Reusing cached faction for {username}");
                     return existingFaction;
                 }
                 
-                // 새 플레이어 세력 생성
+                // 서버에서 받은 LoadID로 기존 세력 찾기
+                var knownFaction = Find.FactionManager.AllFactions
+                    .FirstOrDefault(f => f.Name == $"{username}'s Forces" || 
+                        (f.IsPlayer && f.Name.Contains(username)));
+                if (knownFaction != null)
+                {
+                    playerFactions[username] = knownFaction;
+                    Log.Message($"[HybridMP][FACTION] Found existing faction for {username}: {knownFaction.Name}");
+                    return knownFaction;
+                }
+                
+                // 새 플레이어 세력 생성 (MP NewFactionWithIdeo 패턴)
                 var factionDef = FactionDefOf.PlayerColony;
-                var faction = new Faction();
-                faction.def = factionDef;
-                faction.loadID = Find.UniqueIDsManager.GetNextFactionID();
-                faction.Name = $"{username}'s Forces";
+                var faction = new Faction
+                {
+                    loadID = Find.UniqueIDsManager.GetNextFactionID(),
+                    def = factionDef,
+                    Name = $"{username}'s Forces",
+                    hidden = true  // MP처럼 숨김 처리
+                };
                 faction.colorFromSpectrum = UnityEngine.Random.Range(0f, 1f);
                 
-                // FactionManager에 추가 (relations 자동 초기화)
+                // Ideology 초기화 (NullRef 방지)
+                faction.ideos = new FactionIdeosTracker(faction);
+                if (Faction.OfPlayer?.ideos?.PrimaryIdeo != null)
+                {
+                    faction.ideos.SetPrimary(Faction.OfPlayer.ideos.PrimaryIdeo);
+                }
+                
+                // ===== 핵심: FactionManager.Add 전에 relations 초기화 =====
+                // MP 패턴: TryMakeInitialRelationsWith
+                foreach (Faction other in Find.FactionManager.AllFactionsListForReading)
+                {
+                    faction.TryMakeInitialRelationsWith(other);
+                }
+                
+                // FactionManager에 추가
                 Find.FactionManager.Add(faction);
+                
+                // ===== 플레이어 세력 간 중립 관계 설정 =====
+                // MP 패턴: SetRelation
+                foreach (var f in Find.FactionManager.AllFactions.Where(f => f.IsPlayer && f != faction))
+                {
+                    faction.SetRelation(new FactionRelation(f, FactionRelationKind.Neutral));
+                }
                 
                 // 모든 맵의 attackTargetsCache 알림 (MP 패턴)
                 foreach (Map map in Find.Maps)
                 {
-                    foreach (var f in Find.FactionManager.AllFactions.Where(f => f.IsPlayer))
+                    foreach (var f in Find.FactionManager.AllFactions.Where(f => f.IsPlayer && f != faction))
                     {
                         map.attackTargetsCache.Notify_FactionHostilityChanged(f, faction);
                     }

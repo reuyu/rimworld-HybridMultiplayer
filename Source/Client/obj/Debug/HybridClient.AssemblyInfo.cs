@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HybridClient")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+94f15e9c0a4ba483fc1b121c468b417a2b7135b7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+db7277dbad4f266712f2fd6f0b62552d38c4aa50")]
 [assembly: System.Reflection.AssemblyProductAttribute("HybridClient")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HybridClient")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

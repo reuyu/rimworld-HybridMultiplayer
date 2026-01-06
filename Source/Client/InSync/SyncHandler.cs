@@ -136,13 +136,25 @@ namespace HybridClient.InSync
         
         private string SerializeCommand(InSyncCommand cmd)
         {
-            return Newtonsoft.Json.JsonConvert.SerializeObject(cmd);
+            string json = Newtonsoft.Json.JsonConvert.SerializeObject(cmd);
+            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(json);
+            return Convert.ToBase64String(bytes);
         }
         
         private InSyncCommand DeserializeCommand(string data)
         {
             if (string.IsNullOrEmpty(data)) return null;
-            return Newtonsoft.Json.JsonConvert.DeserializeObject<InSyncCommand>(data);
+            
+            try 
+            {
+                byte[] bytes = Convert.FromBase64String(data);
+                string json = System.Text.Encoding.UTF8.GetString(bytes);
+                return Newtonsoft.Json.JsonConvert.DeserializeObject<InSyncCommand>(json);
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
     
@@ -151,11 +163,12 @@ namespace HybridClient.InSync
     /// </summary>
     public enum InSyncCommandType
     {
-        Draft,
-        Move,
-        Attack,
-        Stop,
-        Custom
+        None = 0,   // 예약 (Lockstep Sync용)
+        Draft = 1,
+        Move = 2,
+        Attack = 3,
+        Stop = 4,
+        Custom = 5
     }
     
     /// <summary>

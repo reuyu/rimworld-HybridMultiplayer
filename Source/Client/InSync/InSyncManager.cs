@@ -70,6 +70,7 @@ namespace HybridClient.InSync
         
         /// <summary>
         /// 서버에서 받은 InSync 알림 처리 (권위자)
+        /// insync_design.md: 권위자는 침입자 폰 스폰 후 스냅샷 전송
         /// </summary>
         public void HandleInSyncNotify(InSyncNotifyPacket packet)
         {
@@ -97,10 +98,32 @@ namespace HybridClient.InSync
                 return;
             }
             
+            // ===== 상태 보존 (MP SaveLoad 패턴) =====
+            InSyncStatePreserver.SaveState(SyncMap);
+            
+            // ===== FactionMapData 초기화 (MP 패턴) =====
+            InSyncFactionMapManager.InitializeForMap(SyncMap);
+            
             // ===== 권위자 세력 초기화 =====
             InSyncFactionManager.InitializeForInSync(true, packet.RequesterUsername);
             
-            // 맵 스냅샷 생성 및 전송
+            // ===== 침입자 세력용 FactionMapData 생성 =====
+            if (InSyncFactionManager.InvaderFaction != null)
+            {
+                InSyncFactionMapManager.CreateForFaction(SyncMap, InSyncFactionManager.InvaderFaction);
+            }
+            
+            // ===== 침입자 폰 스폰 (스냅샷 전송 전에!) =====
+            if (packet.Pawns != null && packet.Pawns.Count > 0)
+            {
+                SpawnInvaderPawnsFromPacket(SyncMap, packet.Pawns);
+            }
+            else
+            {
+                Log.Warning("[HybridMP][INSYNC] No invader pawns in packet");
+            }
+            
+            // 맵 스냅샷 생성 및 전송 (폰 스폰 후)
             SendMapSnapshot();
             
             // ===== 명령 동기화 시작 =====
@@ -179,11 +202,24 @@ namespace HybridClient.InSync
                     {
                         Current.Game.CurrentMap = SyncMap;
                         
+                        // ===== FactionMapData 초기화 (MP 패턴) =====
+                        InSyncFactionMapManager.InitializeForMap(SyncMap);
+                        
                         // ===== 세력 분리 설정 =====
                         InSyncFactionManager.SetupInvaderFactionAfterLoad(NetworkManager.Instance?.Username ?? "Invader");
                         
+                        // ===== 침입자 세력용 FactionMapData 생성 =====
+                        if (InSyncFactionManager.InvaderFaction != null)
+                        {
+                            InSyncFactionMapManager.CreateForFaction(SyncMap, InSyncFactionManager.InvaderFaction);
+                            InSyncFactionMapManager.SwapToFaction(SyncMap, InSyncFactionManager.InvaderFaction);
+                        }
+                        
                         // ===== 침입자 폰 스폰 (별도 세력으로) =====
                         SpawnInvaderPawns(SyncMap, invaderPawnInfos);
+                        
+                        // ===== 상태 복원 (MP SaveLoad 패턴) =====
+                        InSyncStatePreserver.RestoreState(SyncMap);
                         
                         // ===== 명령 동기화 시작 =====
                         SyncHandler.Instance.StartCapturing();
@@ -355,6 +391,33 @@ namespace HybridClient.InSync
             }
             
             Log.Message($"[HybridMP][INSYNC] Spawned {spawned}/{pawnInfos.Count} invader pawns");
+        }
+        
+        /// <summary>
+        /// 패킷의 PawnInfo를 사용하여 침입자 폰 스폰 (권위자 측)
+        /// </summary>
+        private void SpawnInvaderPawnsFromPacket(Map map, List<HybridShared.Packets.PawnInfo> pawnInfos)
+        {
+            if (map == null || pawnInfos == null || pawnInfos.Count == 0)
+            {
+                Log.Warning("[HybridMP][INSYNC] SpawnInvaderPawnsFromPacket - invalid parameters");
+                return;
+            }
+            
+            // 패킷 PawnInfo를 내부 PawnInfo로 변환
+            var internalInfos = new List<PawnInfo>();
+            foreach (var p in pawnInfos)
+            {
+                internalInfos.Add(new PawnInfo
+                {
+                    Name = p.Name,
+                    KindDef = p.KindDef,
+                    FactionDef = p.FactionDef
+                });
+            }
+            
+            // 기존 메서드 호출
+            SpawnInvaderPawns(map, internalInfos);
         }
         
         /// <summary>
@@ -575,6 +638,13 @@ namespace HybridClient.InSync
         /// </summary>
         public void Reset()
         {
+            // ===== MP 패턴 정리 =====
+            if (SyncMap != null)
+            {
+                InSyncFactionMapManager.Cleanup(SyncMap);
+            }
+            InSyncStatePreserver.Cleanup();
+            
             CurrentSessionId = -1;
             PartnerUsername = null;
             Role = InSyncRole.None;

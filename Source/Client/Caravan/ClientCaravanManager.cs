@@ -142,10 +142,22 @@ namespace HybridClient.CaravanSync
             switch (packet.StepMode)
             {
                 case CaravanStepMode.Add:
-                    GuestCaravans.Add(packet.Caravan);
-                    // 월드에 HybridCaravan 추가
-                    AddHybridCaravanToWorld(packet.Caravan);
-                    Log.Message($"[HybridMP][CARAVAN] Guest caravan added: {packet.Caravan.OwnerUsername} at tile {packet.Caravan.Tile}");
+                    // 중복 체크 - 이미 같은 ID 캐러밴이 있으면 무시
+                    bool alreadyExists = GuestCaravans.Any(c => 
+                        c.CaravanId == packet.Caravan.CaravanId && 
+                        c.OwnerUsername == packet.Caravan.OwnerUsername);
+                    
+                    if (!alreadyExists)
+                    {
+                        GuestCaravans.Add(packet.Caravan);
+                        // 월드에 HybridCaravan 추가
+                        AddHybridCaravanToWorld(packet.Caravan);
+                        Log.Message($"[HybridMP][CARAVAN] Guest caravan added: {packet.Caravan.OwnerUsername} at tile {packet.Caravan.Tile}");
+                    }
+                    else
+                    {
+                        Log.Warning($"[HybridMP][CARAVAN] Duplicate caravan ignored: {packet.Caravan.OwnerUsername} ID {packet.Caravan.CaravanId}");
+                    }
                     break;
                     
                 case CaravanStepMode.Remove:

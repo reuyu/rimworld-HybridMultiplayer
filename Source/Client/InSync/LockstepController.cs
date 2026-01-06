@@ -101,6 +101,12 @@ namespace HybridClient.InSync
             PartnerConfirmedTick = MapTicks;
             Cmds.Clear();
             State = InSyncState.Active;
+            
+            // 랜덤 시드 초기화 (RT+MP 하이브리드)
+            InSyncRandHelper.InitializeForInSync(map.uniqueID, sessionId);
+            
+            // Desync 감지 초기화
+            InSyncDesyncDetector.Instance.Initialize(MapTicks);
         }
         
         /// <summary>
@@ -119,6 +125,12 @@ namespace HybridClient.InSync
             PartnerConfirmedTick = startTick;
             Cmds.Clear();
             State = InSyncState.Active;
+            
+            // 랜덤 시드 초기화 (RT+MP 하이브리드)
+            InSyncRandHelper.InitializeForInSync(map.uniqueID, sessionId);
+            
+            // Desync 감지 초기화
+            InSyncDesyncDetector.Instance.Initialize(MapTicks);
         }
         
         /// <summary>
@@ -134,6 +146,12 @@ namespace HybridClient.InSync
             PartnerUsername = null;
             SyncMap = null;
             Cmds.Clear();
+            
+            // 랜덤 상태 정리 (RT+MP 하이브리드)
+            InSyncRandHelper.Cleanup();
+            
+            // Desync 감지 정리
+            InSyncDesyncDetector.Instance.Cleanup();
         }
         
         // ========== 틱 실행 (MP AsyncTimeComp.Tick 참조) ==========
@@ -141,6 +159,7 @@ namespace HybridClient.InSync
         /// <summary>
         /// Lockstep 틱 실행
         /// MP AsyncTimeComp.Tick() 패턴 적용
+        /// RT+MP 하이브리드: InSync 중에만 결정론적 실행
         /// </summary>
         public void Tick()
         {
@@ -160,6 +179,9 @@ namespace HybridClient.InSync
             
             PreContext();
             
+            // 랜덤 시드 제어 시작 (MP Seeds 패턴)
+            InSyncRandHelper.PushMapContext(SyncMap);
+            
             try
             {
                 // 현재 틱의 명령 실행 (CommandQueue.Instance 사용)
@@ -178,6 +200,14 @@ namespace HybridClient.InSync
                 // RimWorld 내부 틱과 동기화
                 // TODO: Harmony Transpiler로 ticksGameInt/ticksThisFrame 접근 필요
                 
+                // 랜덤 상태 캡처 (Desync 감지용)
+                InSyncRandHelper.CaptureRandState();
+                
+                // ===== Desync 감지 기록 =====
+                uint randHash = (uint)(InSyncRandHelper.SharedRandState >> 32);
+                InSyncDesyncDetector.Instance.RecordTickState(MapTicks, randHash);
+                InSyncDesyncDetector.Instance.CheckAndSendOpinion(MapTicks);
+                
                 // 틱 동기화 패킷 전송
                 SendTickConfirmation();
             }
@@ -187,6 +217,9 @@ namespace HybridClient.InSync
             }
             finally
             {
+                // 랜덤 시드 복원
+                InSyncRandHelper.PopState();
+                
                 PostContext();
             }
         }

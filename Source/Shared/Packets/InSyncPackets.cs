@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using HybridShared;
 
 namespace HybridShared.Packets
@@ -41,6 +42,19 @@ namespace HybridShared.Packets
         
         /// <summary>모드 (전투/협동)</summary>
         public InSyncMode Mode { get; set; }
+        
+        /// <summary>침입할 폰 정보 목록</summary>
+        public List<PawnInfo> Pawns { get; set; }
+    }
+    
+    /// <summary>
+    /// 동기화 대상 폰 정보
+    /// </summary>
+    public class PawnInfo
+    {
+        public string Name { get; set; }
+        public string KindDef { get; set; }
+        public string FactionDef { get; set; }
     }
     
     /// <summary>
@@ -61,6 +75,9 @@ namespace HybridShared.Packets
         
         /// <summary>세션 ID</summary>
         public int SessionId { get; set; }
+        
+        /// <summary>침입할 폰 정보 목록</summary>
+        public List<PawnInfo> Pawns { get; set; }
     }
     
     /// <summary>
@@ -91,7 +108,7 @@ namespace HybridShared.Packets
         /// <summary>맵 ID</summary>
         public int MapId { get; set; }
         
-        /// <summary>압축된 맵 데이터 (Base64)</summary>
+        /// <summary>압축된 맵 데이터 (GZip + Base64)</summary>
         public string CompressedMapDataBase64 { get; set; }
         
         /// <summary>현재 틱</summary>
@@ -100,17 +117,28 @@ namespace HybridShared.Packets
         /// <summary>난수 상태</summary>
         public ulong RandState { get; set; }
         
-        // Helper methods for byte[] conversion
+        /// <summary>압축 전 원본 크기 (디버깅용)</summary>
+        public int OriginalSize { get; set; }
+        
+        // Helper methods - GZip 압축 사용
         public byte[] GetCompressedMapData()
         {
-            if (string.IsNullOrEmpty(CompressedMapDataBase64))
-                return null;
-            return Convert.FromBase64String(CompressedMapDataBase64);
+            // Base64 디코딩 후 GZip 해제
+            return InSyncCompression.DecodeAndDecompress(CompressedMapDataBase64);
         }
         
         public void SetCompressedMapData(byte[] data)
         {
-            CompressedMapDataBase64 = data != null ? Convert.ToBase64String(data) : null;
+            if (data == null)
+            {
+                CompressedMapDataBase64 = null;
+                OriginalSize = 0;
+                return;
+            }
+            
+            OriginalSize = data.Length;
+            // GZip 압축 후 Base64 인코딩
+            CompressedMapDataBase64 = InSyncCompression.CompressAndEncode(data);
         }
     }
     
@@ -177,5 +205,25 @@ namespace HybridShared.Packets
         
         /// <summary>종료 사유</summary>
         public string Reason { get; set; }
+    }
+    
+    /// <summary>
+    /// Desync 감지용 동기화 상태 패킷
+    /// MP ClientSyncOpinion 패턴
+    /// </summary>
+    public class SyncOpinionPacket : PacketBase
+    {
+        public override PacketType Type => PacketType.SyncOpinion;
+        
+        public int SessionId { get; set; }
+        
+        /// <summary>Opinion 시작 틱</summary>
+        public int StartTick { get; set; }
+        
+        /// <summary>틱별 랜덤 상태 해시</summary>
+        public List<uint> TickStates { get; set; } = new List<uint>();
+        
+        /// <summary>명령별 랜덤 상태 해시</summary>
+        public List<uint> CommandStates { get; set; } = new List<uint>();
     }
 }

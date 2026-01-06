@@ -259,6 +259,10 @@ namespace HybridServer
             router.Register<LockstepCommandPacket>(HandleLockstepCommand);
             router.Register<LockstepTickPacket>(HandleLockstepTick);
             router.Register<InSyncEndPacket>(HandleInSyncEnd);
+            
+            // 세력 관계 패킷 핸들러
+            router.Register<FactionRelationsRequestPacket>(HandleFactionRelationsRequest);
+            router.Register<FactionRelationSyncPacket>(HandleFactionRelationSync);
         }
         
         private void SetupBattleEvents()
@@ -897,7 +901,8 @@ namespace HybridServer
                 RequesterUsername = clientInfo.Username,
                 TileId = packet.TargetTileId,
                 Mode = packet.Mode,
-                SessionId = sessionId
+                SessionId = sessionId,
+                Pawns = packet.Pawns  // 중요: 침입자 폰 정보 전달
             });
         }
         
@@ -958,6 +963,39 @@ namespace HybridServer
                 Send(session.InvaderPeer, packet);
             
             inSyncSessions.Remove(packet.SessionId);
+        }
+        
+        // ========== 세력 관계 핸들러 ==========
+        
+        private void HandleFactionRelationsRequest(NetPeer peer, FactionRelationsRequestPacket packet)
+        {
+            Console.WriteLine($"[FACTION] Relations request from {packet.Username}");
+            
+            var relations = FactionRelationManager.Instance.GetAllRelations();
+            
+            var response = new FactionRelationsResponsePacket
+            {
+                Relations = relations
+            };
+            
+            Send(peer, response);
+        }
+        
+        private void HandleFactionRelationSync(NetPeer peer, FactionRelationSyncPacket packet)
+        {
+            Console.WriteLine($"[FACTION] Relation sync: {packet.FactionA} <-> {packet.FactionB} = {packet.NewKind} ({packet.Reason})");
+            
+            // 관계 저장
+            FactionRelationManager.Instance.SetRelation(
+                packet.FactionA,
+                packet.FactionB,
+                packet.NewKind,
+                packet.NewGoodwill,
+                packet.Reason
+            );
+            
+            // 모든 클라이언트에 브로드캐스트
+            Broadcast(packet);
         }
     }
     

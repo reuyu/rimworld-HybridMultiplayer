@@ -79,11 +79,17 @@ namespace HybridShared
         LockstepTick = 74,
         LockstepCommand = 75,
         InSyncEnd = 76,
+        SyncOpinion = 77,  // Desync 감지용
         
         // ========== 관리 (80-89) ==========
         Kick = 80,
         Ban = 81,
-        ServerMessage = 82
+        ServerMessage = 82,
+        
+        // ========== 세력 관계 (90-99) ==========
+        FactionRelationsRequest = 90,
+        FactionRelationsResponse = 91,
+        FactionRelationSync = 92
     }
     
     /// <summary>

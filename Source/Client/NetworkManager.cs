@@ -121,6 +121,10 @@ namespace HybridClient
             router.Register<MapSnapshotPacket>(HandleMapSnapshot);
             router.Register<LockstepCommandPacket>(HandleLockstepCommand);
             router.Register<InSyncEndPacket>(HandleInSyncEnd);
+            
+            // 세력 관계 패킷 핸들러
+            router.Register<FactionRelationsResponsePacket>(HandleFactionRelationsResponse);
+            router.Register<FactionRelationSyncPacket>(HandleFactionRelationSync);
         }
         
         #region Packet Handlers
@@ -134,6 +138,9 @@ namespace HybridClient
                 ServerName = packet.ServerName;
                 Log.Message($"[HybridMP] Authenticated! SessionId: {SessionId}, Server: {ServerName}");
                 OnAuthenticated?.Invoke(packet);
+                
+                // 접속 성공 시 세력 관계 요청
+                FactionRelationSyncManager.RequestAllRelations();
             }
             else
             {
@@ -557,6 +564,16 @@ namespace HybridClient
         private void HandleInSyncEnd(InSyncEndPacket packet)
         {
             InSync.InSyncManager.Instance.HandleInSyncEnd(packet);
+        }
+        
+        private void HandleFactionRelationsResponse(FactionRelationsResponsePacket packet)
+        {
+            FactionRelationSyncManager.ApplyRelations(packet.Relations);
+        }
+        
+        private void HandleFactionRelationSync(FactionRelationSyncPacket packet)
+        {
+            FactionRelationSyncManager.OnRelationChanged(packet);
         }
         
         #endregion
