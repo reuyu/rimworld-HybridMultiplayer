@@ -173,9 +173,13 @@ namespace HybridClient.InSync
                 return;
             }
             
-            // 상대방 틱 확인 (Lockstep 동기화)
-            // 상대방이 현재 틱까지 진행하지 않았으면 대기
-            // TODO: 실제 구현에서는 서버를 통해 틱 확인 필요
+            // ========== 상대방 틱 대기 (MP tickUntil 패턴) ==========
+            // 상대방이 현재 틱까지 진행하지 않았으면 대기 (Stall)
+            if (!CanAdvanceTick())
+            {
+                // 대기 중 - 틱 진행 안함
+                return;
+            }
             
             PreContext();
             
@@ -197,8 +201,17 @@ namespace HybridClient.InSync
                     SyncMap.MapPostTick();
                 }
                 
-                // RimWorld 내부 틱과 동기화
-                // TODO: Harmony Transpiler로 ticksGameInt/ticksThisFrame 접근 필요
+                // ===== TickManager 동기화 (MP AsyncTimeComp 패턴) =====
+                // 림월드 내부 시스템(날씨, 계절 등)이 정상 동작하도록
+                try
+                {
+                    var ticksField = HarmonyLib.AccessTools.Field(typeof(TickManager), "ticksGameInt");
+                    if (ticksField != null)
+                    {
+                        ticksField.SetValue(Find.TickManager, MapTicks);
+                    }
+                }
+                catch { /* 실패 시 무시 */ }
                 
                 // 랜덤 상태 캡처 (Desync 감지용)
                 InSyncRandHelper.CaptureRandState();
@@ -247,6 +260,28 @@ namespace HybridClient.InSync
             // 난수 상태 저장
             RandState = (ulong)(Rand.Int & 0xFFFFFFFF) | ((ulong)(Rand.Int & 0xFFFFFFFF) << 32);
             Rand.PopState();
+        }
+        
+        /// <summary>
+        /// 틱 진행 가능 여부 확인 (MP tickUntil 패턴)
+        /// 상대방이 현재 틱까지 도달했는지 확인
+        /// </summary>
+        private bool CanAdvanceTick()
+        {
+            // 상대방 확인 틱이 현재 틱보다 같거나 높아야 진행 가능
+            // PartnerConfirmedTick: 상대방이 확인 패킷으로 알려준 마지막 틱
+            if (PartnerConfirmedTick < MapTicks)
+            {
+                // 상대방이 아직 현재 틱에 도달하지 않음 - 대기
+                // 일정 시간마다만 경고 출력
+                if (MapTicks % 60 == 0)
+                {
+                    Log.Warning($"[HybridMP][LOCKSTEP] Waiting for partner... My tick: {MapTicks}, Partner: {PartnerConfirmedTick}");
+                }
+                return false;
+            }
+            
+            return true;
         }
         
         /// <summary>
